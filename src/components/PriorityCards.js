@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import { MdCall } from "react-icons/md";
 import { AiFillCloseCircle } from "react-icons/ai";
 
 const PriorityCards = ({ priority, priorityCard, setpriorityCard }) => {
+  const webSocketRef = useRef(null);
   const [message, setMessage] = useState("");
   const [response, setResponse] = useState("");
   const [showMap, setshowMap] = useState(false);
@@ -21,6 +22,84 @@ const PriorityCards = ({ priority, priorityCard, setpriorityCard }) => {
   //     console.error(error);
   //   }
   // };
+
+  // useEffect(() => {
+  //   webSocketRef.current = new WebSocket("ws://localhost:8080");
+  //   webSocketRef.current.onmessage = (msg) => {
+  //     const data = JSON.parse(msg.data);
+  //     if (data.event === "done") {
+  //       const index = priorityCard.findIndex((card) => card.id === newId);
+  //       handleSubmit(priorityCard[index].transcript);
+  //     }
+  //   };
+  // }, []);
+
+  // let newId = Math.floor(Math.random() * 100) * Math.floor(Math.random() * 100);
+  let newId = "wqfwkgeghe45321";
+  let open = true;
+  let newEmergency;
+  let newIndex;
+  let thisTranscript = "";
+  useEffect(() => {
+    webSocketRef.current = new WebSocket("ws://localhost:8080");
+    webSocketRef.current.onmessage = (msg) => {
+      const data = JSON.parse(msg.data);
+      console.log(`id updated ${newId}`);
+      open = true;
+      if (data.event === "interim-transcription") {
+        console.log(data.text);
+        newEmergency = {
+          name: "undefined",
+          number: "",
+          emergency: "",
+          location: "",
+          id: newId,
+          status: "open",
+          transcript: data.text,
+          priority: 0,
+        };
+        newIndex = priorityCard.findIndex((card) => card.id == newId);
+
+        if (newIndex !== -1) {
+          console.log("exists at index", newIndex);
+          setpriorityCard([
+            ...priorityCard.slice(0, newIndex),
+            {
+              ...newEmergency,
+            },
+            ...priorityCard.slice(newIndex + 1),
+          ]);
+          console.log("just set it", priorityCard);
+        } else {
+          console.log("does not already exists");
+          setpriorityCard([
+            ...priorityCard,
+            {
+              ...newEmergency,
+            },
+          ]);
+        }
+      } else if (data.event === "call-ended") {
+        console.log("call ended final id: ", newId);
+        console.log(priorityCard);
+        if (newEmergency.id && open) {
+          if (priorityCard.length > 0) {
+            const selectedIndex = newEmergency.index;
+            console.log("index found", selectedIndex, newIndex);
+            if (selectedIndex != -1) {
+              console.log("updating + handle submit at index: ", selectedIndex);
+              console.log(newEmergency.transcript);
+              handleSubmit(newEmergency.transcript);
+              // newId =
+              //   Math.floor(Math.random() * 100) * Math.floor(Math.random() * 100);
+            } else {
+              console.log("not found");
+            }
+          }
+        }
+      }
+    };
+  }, []);
 
   const MyMap = () => {
     return (
@@ -46,28 +125,55 @@ const PriorityCards = ({ priority, priorityCard, setpriorityCard }) => {
 
   let theTranscript = "";
   function updateCard(newValues, text) {
-    console.log("2", theTranscript);
+    console.log("2", text);
     console.log("updating");
-    let cards = [];
-    for (let index = 0; index < priorityCard.length; index++) {
-      const card = priorityCard[index];
-      if (card["id"] == selectedCard) {
-        let newCard = {
-          name: newValues[0],
-          number: newValues[1],
-          emergency: newValues[2],
-          location: newValues[3],
-          id: selectedCard,
-          status: "open",
-          transcript: theTranscript,
-          priority: priority == "Incomming" ? 0 : priority,
-        };
-        cards.push(newCard);
-      } else {
-        cards.push(card);
-      }
+    let cards = priorityCard;
+    // for (let index = 0; index < priorityCard.length; index++) {
+    //   const card = priorityCard[index];
+    //   if (card["id"] == newId) {
+    //     let newCard = {
+    //       name: newValues[0],
+    //       number: newValues[1],
+    //       emergency: newValues[2],
+    //       location: newValues[3],
+    //       id: newId,
+    //       status: "open",
+    //       transcript: text,
+    //       priority: 0,
+    //     };
+    //     cards.push(newCard);
+    //   } else {
+    //     cards.push(card);
+    //   }
+    // }
+
+    let newEmergencyIndex = cards.findIndex((card) => card.id == newId);
+    if (newEmergencyIndex == -1) {
+      cards.push({
+        name: newValues[0],
+        number: newValues[1],
+        emergency: newValues[2],
+        location: newValues[3],
+        id: newId,
+        status: "open",
+        transcript: text,
+        priority: 0,
+      });
+      newId = "ebfqhwb327379";
+      open = false;
+      newEmergency = {
+        name: "undefined",
+        number: "",
+        emergency: "",
+        location: "",
+        id: null,
+        status: "open",
+        transcript: "",
+        priority: 0,
+      };
     }
     setpriorityCard(cards);
+    console.log(cards);
   }
 
   async function handleSubmit(text) {
@@ -80,9 +186,10 @@ const PriorityCards = ({ priority, priorityCard, setpriorityCard }) => {
     })
       .then((res) => res.json())
       .then((data) => {
-        console.log("1", theTranscript);
+        console.log("1", text);
         setResponse(JSON.parse(data.message));
-        updateCard(JSON.parse(data.message, text));
+        console.log(data.message);
+        updateCard(JSON.parse(data.message), text);
       });
   }
 

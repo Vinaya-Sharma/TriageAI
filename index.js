@@ -6,8 +6,6 @@ const bodyParser = require("body-parser");
 
 const cors = require("cors");
 const WebSocket = require("ws");
-const server = require("http").createServer(app);
-const wss = new WebSocket.Server({ server });
 
 const app = express();
 const port = 3001;
@@ -17,6 +15,8 @@ const configuration = new Configuration({
   apiKey: process.env.OPENAIKEY,
 });
 const openai = new OpenAIApi(configuration);
+const server = require("http").createServer(app);
+const wss = new WebSocket.Server({ server });
 
 app.use(bodyParser.json());
 app.use(cors());
@@ -75,6 +75,16 @@ wss.on("connection", function connection(ws) {
       case "stop":
         console.log(`Call Has Ended`);
         recognizeStream.destroy();
+        ws.send("event: done");
+        wss.clients.forEach((client) => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(
+              JSON.stringify({
+                event: "call-ended",
+              })
+            );
+          }
+        });
         break;
     }
   });
