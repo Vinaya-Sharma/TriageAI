@@ -36,8 +36,17 @@ const PriorityCards = ({ priority, priorityCard, setpriorityCard }) => {
 
   // let newId = Math.floor(Math.random() * 100) * Math.floor(Math.random() * 100);
   let newId = "wqfwkgeghe45321";
-  let open = true;
-  let newEmergency;
+  let open = false;
+  let newEmergency = {
+    name: "undefined",
+    number: "",
+    emergency: "",
+    location: "",
+    id: null,
+    status: "open",
+    transcript: "",
+    priority: 0,
+  };
   let newIndex;
   let thisTranscript = "";
   useEffect(() => {
@@ -45,9 +54,7 @@ const PriorityCards = ({ priority, priorityCard, setpriorityCard }) => {
     webSocketRef.current.onmessage = (msg) => {
       const data = JSON.parse(msg.data);
       console.log(`id updated ${newId}`);
-      open = true;
       if (data.event === "interim-transcription") {
-        console.log(data.text);
         newEmergency = {
           name: "undefined",
           number: "",
@@ -59,7 +66,7 @@ const PriorityCards = ({ priority, priorityCard, setpriorityCard }) => {
           priority: 0,
         };
         newIndex = priorityCard.findIndex((card) => card.id == newId);
-
+        open = true;
         if (newIndex !== -1) {
           console.log("exists at index", newIndex);
           setpriorityCard([
@@ -69,9 +76,7 @@ const PriorityCards = ({ priority, priorityCard, setpriorityCard }) => {
             },
             ...priorityCard.slice(newIndex + 1),
           ]);
-          console.log("just set it", priorityCard);
         } else {
-          console.log("does not already exists");
           setpriorityCard([
             ...priorityCard,
             {
@@ -82,13 +87,16 @@ const PriorityCards = ({ priority, priorityCard, setpriorityCard }) => {
       } else if (data.event === "call-ended") {
         console.log("call ended final id: ", newId);
         console.log(priorityCard);
-        if (newEmergency.id && open) {
+        if (
+          newEmergency.id &&
+          open &&
+          (priorityCard[6]?.transcript !== newEmergency.transcript ||
+            !priorityCard[6])
+        ) {
+          console.log("open to new card");
           if (priorityCard.length > 0) {
             const selectedIndex = newEmergency.index;
-            console.log("index found", selectedIndex, newIndex);
             if (selectedIndex != -1) {
-              console.log("updating + handle submit at index: ", selectedIndex);
-              console.log(newEmergency.transcript);
               handleSubmit(newEmergency.transcript);
               // newId =
               //   Math.floor(Math.random() * 100) * Math.floor(Math.random() * 100);
@@ -128,24 +136,6 @@ const PriorityCards = ({ priority, priorityCard, setpriorityCard }) => {
     console.log("2", text);
     console.log("updating");
     let cards = priorityCard;
-    // for (let index = 0; index < priorityCard.length; index++) {
-    //   const card = priorityCard[index];
-    //   if (card["id"] == newId) {
-    //     let newCard = {
-    //       name: newValues[0],
-    //       number: newValues[1],
-    //       emergency: newValues[2],
-    //       location: newValues[3],
-    //       id: newId,
-    //       status: "open",
-    //       transcript: text,
-    //       priority: 0,
-    //     };
-    //     cards.push(newCard);
-    //   } else {
-    //     cards.push(card);
-    //   }
-    // }
 
     let newEmergencyIndex = cards.findIndex((card) => card.id == newId);
     if (newEmergencyIndex == -1) {
