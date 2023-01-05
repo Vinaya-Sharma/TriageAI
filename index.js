@@ -115,8 +115,13 @@ app.post("/extractDetails", async (req, res) => {
   const response = await openai.createCompletion({
     model: "text-davinci-003",
     prompt: `im going to write a made up emergency situation. extract the name of the person calling, the number they are calling from, what their emergency is and where they are located from the text.
-    Text: ${message}. Provide response with an array in order of person, number(format this as a phone number), emergency(choose from Medical Emergency, Car Accident, Water Safety Concern, House Fire, Building Fire, Being Followed, Shooting, Heart Attack, Serious Medical Emergency, Allergies), and location
-    
+    Text: ${message}. Provide response as a JSON object with keys of name, phone(format this as a phone number), description(choose from Medical Emergency, Car Accident, Water Safety Concern, House Fire, Building Fire, Being Followed, Shooting, Heart Attack, Serious Medical Emergency, Allergies), and location
+    here is an example {
+    "name": "Sophia",
+    "phone": "592-663-5946",
+    "description": "Being Followed",
+    "location": "Salt Lake Beach, Toronto"
+  }
     Array Answer:`,
     max_tokens: 100,
     temperature: 0,

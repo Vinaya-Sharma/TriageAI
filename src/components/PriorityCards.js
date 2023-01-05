@@ -4,47 +4,18 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import { MdCall } from "react-icons/md";
 import { AiFillCloseCircle } from "react-icons/ai";
 
-const PriorityCards = ({ priority }) => {
+const PriorityCards = ({
+  priority,
+  priorityCard,
+  setpriorityCard,
+  updateLabel,
+  selectedCard,
+  setSelectedCard,
+}) => {
   const webSocketRef = useRef(null);
   const [message, setMessage] = useState("");
   const [response, setResponse] = useState("");
   const [showMap, setshowMap] = useState(false);
-  const [selectedCard, setSelectedCard] = useState("efnwhfwhn1");
-  const [priorityCard, setpriorityCard] = useState([
-    {
-      name: "Jack Moscow",
-      status: "open",
-      number: "747-271-3827",
-      emergency: "Crime in progress",
-      priority: 1,
-      transcript:
-        "Lauren Ipsum is a placeholder text that is often used to fill in the content of a design or layout in order to focus on its visual elements. It is named after the character Lauren from the popular children's book Where the Wild Things Are. Lauren Ipsum is a variation on the classic Lorem Ipsum placeholder text, which has been used by printers and designers for centuries to fill in the content of a layout. Unlike Lorem Ipsum, which is a garbled version of Latin text, Lauren Ipsum is made up of completely invented words and phrases that are intended to be nonsensical and meaningless. Despite its nonsensical nature, Lauren Ipsum can be useful in a variety of contexts. It is often used by designers and developers to fill in the content of a layout in order to focus on its visual elements, such as typography, layout, and color. It is also used by writers and editors as a way to generate filler content that can be used to fill in gaps in a document or article.",
-      location: "379 Backster Street Brampton ON",
-      id: `efnjefnjfnwjnfj`,
-    },
-    {
-      name: "Sophia Gin",
-      status: "open",
-      number: "647-341-5698",
-      emergency: "Active Shooting",
-      priority: 1,
-      transcript:
-        "Lauren Ipsum is a placeholder text that is often used to fill in the content of a design or layout in order to focus on its visual elements. It is named after the character Lauren from the popular children's book Where the Wild Things Are. Lauren Ipsum is a variation on the classic Lorem Ipsum placeholder text, which has been used by printers and designers for centuries to fill in the content of a layout. Unlike Lorem Ipsum, which is a garbled version of Latin text, Lauren Ipsum is made up of completely invented words and phrases that are intended to be nonsensical and meaningless. Despite its nonsensical nature, Lauren Ipsum can be useful in a variety of contexts. It is often used by designers and developers to fill in the content of a layout in order to focus on its visual elements, such as typography, layout, and color. It is also used by writers and editors as a way to generate filler content that can be used to fill in gaps in a document or article.",
-      location: "379 Backster Street Brampton ON",
-      id: `vghvghvgh`,
-    },
-    {
-      name: "Carl Witaker",
-      status: "open",
-      number: "447-191-8009",
-      emergency: "Fight",
-      priority: 2,
-      transcript:
-        "Lauren Ipsum is a placeholder text that is often used to fill in the content of a design or layout in order to focus on its visual elements. It is named after the character Lauren from the popular children's book Where the Wild Things Are. Lauren Ipsum is a variation on the classic Lorem Ipsum placeholder text, which has been used by printers and designers for centuries to fill in the content of a layout. Unlike Lorem Ipsum, which is a garbled version of Latin text, Lauren Ipsum is made up of completely invented words and phrases that are intended to be nonsensical and meaningless. Despite its nonsensical nature, Lauren Ipsum can be useful in a variety of contexts. It is often used by designers and developers to fill in the content of a layout in order to focus on its visual elements, such as typography, layout, and color. It is also used by writers and editors as a way to generate filler content that can be used to fill in gaps in a document or article.",
-      location: "379 Backster Street Brampton ON",
-      id: `juhuihiojij`,
-    },
-  ]);
 
   useEffect(() => {
     setpriorityCard(priorityCard);
@@ -117,10 +88,10 @@ const PriorityCards = ({ priority }) => {
     let duplicate = cards.findIndex((card) => card.transcript == text);
     if (duplicate == -1) {
       cards.push({
-        name: newValues[0],
-        number: newValues[1],
-        emergency: newValues[2],
-        location: newValues[3],
+        name: newValues.name,
+        number: newValues.phone,
+        emergency: newValues.description,
+        location: newValues.location,
         id: Math.floor(Math.random() * 100) * Math.floor(Math.random() * 100),
         status: "open",
         transcript: text,
@@ -156,9 +127,15 @@ const PriorityCards = ({ priority }) => {
       .then((res) => res.json())
       .then((data) => {
         console.log("1", text);
-        setResponse(JSON.parse(data.message));
-        console.log(data.message);
-        updateCard(JSON.parse(data.message), text);
+        try {
+          const newdata = JSON.parse(data.message);
+          console.log(newdata);
+          setResponse(newdata);
+          console.log(newdata);
+          updateCard(newdata, text);
+        } catch (error) {
+          console.error(error);
+        }
       });
   }
 
@@ -174,24 +151,6 @@ const PriorityCards = ({ priority }) => {
     console.log(text);
     theTranscript = text;
     handleSubmit(text);
-  };
-
-  const updateLabel = (e) => {
-    let theCards = [];
-
-    priorityCard.forEach((card) => {
-      if (card.id == selectedCard) {
-        theCards.push({
-          ...card,
-          priority: parseInt(e.target.value),
-        });
-      } else {
-        theCards.push(card);
-      }
-    });
-
-    console.log(theCards);
-    setpriorityCard(theCards);
   };
 
   useEffect(() => {
@@ -244,7 +203,7 @@ const PriorityCards = ({ priority }) => {
                 <div className="flex text-myGrey gap-5">
                   <h3 className=" text-sm">Priority</h3>
                   <select
-                    value={priority == "Incomming" ? undefined : card.priority}
+                    value={card.priority}
                     placeholder="select priority level"
                     onChange={updateLabel}
                     className="w-auto flex items-center justify-center rounded-full font-bold text-purple-500 bg-purple-100 py-1 px-2  "
@@ -260,7 +219,7 @@ const PriorityCards = ({ priority }) => {
                 <div className="flex items-center py-2 text-myGrey gap-5">
                   <h3 className=" text-sm">Number</h3>
                   <h3 className="w-auto flex items-center justify-center rounded-full font-bold text-orange-500 bg-orange-100 py-1 px-2  ">
-                    {response[1]}
+                    {card.number}
                   </h3>
                   <h3 className=" text-sm">Status</h3>
                   <h3 className="w-auto flex items-center justify-center rounded-full font-bold text-pink-500 bg-pink-100  py-1 px-2 ">
