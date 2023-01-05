@@ -40,23 +40,23 @@ const PriorityCards = ({
   };
   let newIndex;
   let thisTranscript = "";
-  // useEffect(() => {
-  //   webSocketRef.current = new WebSocket("ws://localhost:8080");
-  //   webSocketRef.current.onmessage = (msg) => {
-  //     const data = JSON.parse(msg.data);
-  //     console.log(`id updated ${newId}`);
-  //     if (data.event === "interim-transcription") {
-  //       thisTranscript = data.text;
-  //     } else if (data.event === "call-ended") {
-  //       console.log("open to new card");
-  //       if (priorityCard.length > 0) {
-  //         handleSubmit(thisTranscript);
-  //       } else {
-  //         console.log("not found");
-  //       }
-  //     }
-  //   };
-  // }, []);
+  useEffect(() => {
+    webSocketRef.current = new WebSocket("ws://localhost:8080");
+    webSocketRef.current.onmessage = (msg) => {
+      const data = JSON.parse(msg.data);
+      console.log(`id updated ${newId}`);
+      if (data.event === "interim-transcription") {
+        thisTranscript = data.text;
+      } else if (data.event === "call-ended") {
+        console.log("open to new card");
+        if (priorityCard.length > 0) {
+          handleSubmit(thisTranscript);
+        } else {
+          console.log("not found");
+        }
+      }
+    };
+  }, []);
 
   const MyMap = () => {
     return (
