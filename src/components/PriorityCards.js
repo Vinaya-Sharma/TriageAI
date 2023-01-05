@@ -4,37 +4,57 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import { MdCall } from "react-icons/md";
 import { AiFillCloseCircle } from "react-icons/ai";
 
-const PriorityCards = ({ priority, priorityCard, setpriorityCard }) => {
+const PriorityCards = ({ priority }) => {
   const webSocketRef = useRef(null);
   const [message, setMessage] = useState("");
   const [response, setResponse] = useState("");
   const [showMap, setshowMap] = useState(false);
   const [selectedCard, setSelectedCard] = useState("efnwhfwhn1");
+  const [priorityCard, setpriorityCard] = useState([
+    {
+      name: "Jack Moscow",
+      status: "open",
+      number: "747-271-3827",
+      emergency: "Crime in progress",
+      priority: 1,
+      transcript:
+        "Lauren Ipsum is a placeholder text that is often used to fill in the content of a design or layout in order to focus on its visual elements. It is named after the character Lauren from the popular children's book Where the Wild Things Are. Lauren Ipsum is a variation on the classic Lorem Ipsum placeholder text, which has been used by printers and designers for centuries to fill in the content of a layout. Unlike Lorem Ipsum, which is a garbled version of Latin text, Lauren Ipsum is made up of completely invented words and phrases that are intended to be nonsensical and meaningless. Despite its nonsensical nature, Lauren Ipsum can be useful in a variety of contexts. It is often used by designers and developers to fill in the content of a layout in order to focus on its visual elements, such as typography, layout, and color. It is also used by writers and editors as a way to generate filler content that can be used to fill in gaps in a document or article.",
+      location: "379 Backster Street Brampton ON",
+      id: `efnjefnjfnwjnfj`,
+    },
+    {
+      name: "Sophia Gin",
+      status: "open",
+      number: "647-341-5698",
+      emergency: "Active Shooting",
+      priority: 1,
+      transcript:
+        "Lauren Ipsum is a placeholder text that is often used to fill in the content of a design or layout in order to focus on its visual elements. It is named after the character Lauren from the popular children's book Where the Wild Things Are. Lauren Ipsum is a variation on the classic Lorem Ipsum placeholder text, which has been used by printers and designers for centuries to fill in the content of a layout. Unlike Lorem Ipsum, which is a garbled version of Latin text, Lauren Ipsum is made up of completely invented words and phrases that are intended to be nonsensical and meaningless. Despite its nonsensical nature, Lauren Ipsum can be useful in a variety of contexts. It is often used by designers and developers to fill in the content of a layout in order to focus on its visual elements, such as typography, layout, and color. It is also used by writers and editors as a way to generate filler content that can be used to fill in gaps in a document or article.",
+      location: "379 Backster Street Brampton ON",
+      id: `vghvghvgh`,
+    },
+    {
+      name: "Carl Witaker",
+      status: "open",
+      number: "447-191-8009",
+      emergency: "Fight",
+      priority: 2,
+      transcript:
+        "Lauren Ipsum is a placeholder text that is often used to fill in the content of a design or layout in order to focus on its visual elements. It is named after the character Lauren from the popular children's book Where the Wild Things Are. Lauren Ipsum is a variation on the classic Lorem Ipsum placeholder text, which has been used by printers and designers for centuries to fill in the content of a layout. Unlike Lorem Ipsum, which is a garbled version of Latin text, Lauren Ipsum is made up of completely invented words and phrases that are intended to be nonsensical and meaningless. Despite its nonsensical nature, Lauren Ipsum can be useful in a variety of contexts. It is often used by designers and developers to fill in the content of a layout in order to focus on its visual elements, such as typography, layout, and color. It is also used by writers and editors as a way to generate filler content that can be used to fill in gaps in a document or article.",
+      location: "379 Backster Street Brampton ON",
+      id: `juhuihiojij`,
+    },
+  ]);
 
-  // const getCoordinatesFromLocation = async () => {
-  //   try {
-  //     const response = await axios.get(
-  //       `https://nominatim.openstreetmap.org/search?q=Toronto&format=json`
-  //     );
-  //     const { lat, lon } = response.data[0];
-  //     console.log(lat, lon);
-  //   } catch (error) {
-  //     console.error(error);
-  //   }
-  // };
+  useEffect(() => {
+    setpriorityCard(priorityCard);
+  }, [priorityCard]);
 
-  // useEffect(() => {
-  //   webSocketRef.current = new WebSocket("ws://localhost:8080");
-  //   webSocketRef.current.onmessage = (msg) => {
-  //     const data = JSON.parse(msg.data);
-  //     if (data.event === "done") {
-  //       const index = priorityCard.findIndex((card) => card.id === newId);
-  //       handleSubmit(priorityCard[index].transcript);
-  //     }
-  //   };
-  // }, []);
+  useEffect(() => {
+    setpriorityCard((prev) => prev);
+  }, [priorityCard, setpriorityCard]);
 
-  // let newId = Math.floor(Math.random() * 100) * Math.floor(Math.random() * 100);
+  let theTranscript = "";
   let newId = "wqfwkgeghe45321";
   let open = false;
   let newEmergency = {
@@ -49,65 +69,23 @@ const PriorityCards = ({ priority, priorityCard, setpriorityCard }) => {
   };
   let newIndex;
   let thisTranscript = "";
-  useEffect(() => {
-    webSocketRef.current = new WebSocket("ws://localhost:8080");
-    webSocketRef.current.onmessage = (msg) => {
-      const data = JSON.parse(msg.data);
-      console.log(`id updated ${newId}`);
-      if (data.event === "interim-transcription") {
-        newEmergency = {
-          name: "undefined",
-          number: "",
-          emergency: "",
-          location: "",
-          id: newId,
-          status: "open",
-          transcript: data.text,
-          priority: 0,
-        };
-        newIndex = priorityCard.findIndex((card) => card.id == newId);
-        open = true;
-        if (newIndex !== -1) {
-          console.log("exists at index", newIndex);
-          setpriorityCard([
-            ...priorityCard.slice(0, newIndex),
-            {
-              ...newEmergency,
-            },
-            ...priorityCard.slice(newIndex + 1),
-          ]);
-        } else {
-          setpriorityCard([
-            ...priorityCard,
-            {
-              ...newEmergency,
-            },
-          ]);
-        }
-      } else if (data.event === "call-ended") {
-        console.log("call ended final id: ", newId);
-        console.log(priorityCard);
-        if (
-          newEmergency.id &&
-          open &&
-          (priorityCard[6]?.transcript !== newEmergency.transcript ||
-            !priorityCard[6])
-        ) {
-          console.log("open to new card");
-          if (priorityCard.length > 0) {
-            const selectedIndex = newEmergency.index;
-            if (selectedIndex != -1) {
-              handleSubmit(newEmergency.transcript);
-              // newId =
-              //   Math.floor(Math.random() * 100) * Math.floor(Math.random() * 100);
-            } else {
-              console.log("not found");
-            }
-          }
-        }
-      }
-    };
-  }, []);
+  // useEffect(() => {
+  //   webSocketRef.current = new WebSocket("ws://localhost:8080");
+  //   webSocketRef.current.onmessage = (msg) => {
+  //     const data = JSON.parse(msg.data);
+  //     console.log(`id updated ${newId}`);
+  //     if (data.event === "interim-transcription") {
+  //       thisTranscript = data.text;
+  //     } else if (data.event === "call-ended") {
+  //       console.log("open to new card");
+  //       if (priorityCard.length > 0) {
+  //         handleSubmit(thisTranscript);
+  //       } else {
+  //         console.log("not found");
+  //       }
+  //     }
+  //   };
+  // }, []);
 
   const MyMap = () => {
     return (
@@ -131,20 +109,19 @@ const PriorityCards = ({ priority, priorityCard, setpriorityCard }) => {
   recognition.lang = "en-US";
   recognition.interimResults = false;
 
-  let theTranscript = "";
   function updateCard(newValues, text) {
     console.log("2", text);
     console.log("updating");
-    let cards = priorityCard;
+    let cards = [...priorityCard];
 
-    let newEmergencyIndex = cards.findIndex((card) => card.id == newId);
-    if (newEmergencyIndex == -1) {
+    let duplicate = cards.findIndex((card) => card.transcript == text);
+    if (duplicate == -1) {
       cards.push({
         name: newValues[0],
         number: newValues[1],
         emergency: newValues[2],
         location: newValues[3],
-        id: newId,
+        id: Math.floor(Math.random() * 100) * Math.floor(Math.random() * 100),
         status: "open",
         transcript: text,
         priority: 0,
@@ -161,6 +138,8 @@ const PriorityCards = ({ priority, priorityCard, setpriorityCard }) => {
         transcript: "",
         priority: 0,
       };
+    } else {
+      console.log("same text");
     }
     setpriorityCard(cards);
     console.log(cards);
@@ -197,9 +176,40 @@ const PriorityCards = ({ priority, priorityCard, setpriorityCard }) => {
     handleSubmit(text);
   };
 
+  const updateLabel = (e) => {
+    let theCards = [];
+
+    priorityCard.forEach((card) => {
+      if (card.id == selectedCard) {
+        theCards.push({
+          ...card,
+          priority: parseInt(e.target.value),
+        });
+      } else {
+        theCards.push(card);
+      }
+    });
+
+    console.log(theCards);
+    setpriorityCard(theCards);
+  };
+
+  useEffect(() => {
+    setpriorityCard((prev) => prev);
+    console.log("tryung");
+  }, [
+    handleSubmit,
+    handleVoiceToText,
+    priorityCard,
+    updateCard,
+    setpriorityCard,
+    updateLabel,
+  ]);
+
   return (
     <div>
       <h3
+        onClick={handleVoiceToText}
         className={`${
           priority == "Incomming" && "underline underline-offset-2 font-bold"
         } mb-8 min-w-[200px]  text-sm`}
@@ -236,23 +246,10 @@ const PriorityCards = ({ priority, priorityCard, setpriorityCard }) => {
                   <select
                     value={priority == "Incomming" ? undefined : card.priority}
                     placeholder="select priority level"
-                    onChange={(e) => {
-                      const index = priorityCard.findIndex(
-                        (card) => card.id === selectedCard
-                      );
-
-                      setpriorityCard([
-                        ...priorityCard.slice(0, index),
-                        {
-                          ...card,
-                          priority: parseInt(e.target.value),
-                        },
-                        ...priorityCard.slice(index + 1),
-                      ]);
-                      console.log(priorityCard);
-                    }}
+                    onChange={updateLabel}
                     className="w-auto flex items-center justify-center rounded-full font-bold text-purple-500 bg-purple-100 py-1 px-2  "
                   >
+                    <option value={0}>0</option>
                     <option value={1}>1</option>
                     <option value={2}>2</option>
                     <option value={3}>3</option>

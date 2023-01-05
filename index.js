@@ -36,59 +36,59 @@ const request = {
   interimResults: true, // If you want interim results, set this to true
 };
 
-wss.on("connection", function connection(ws) {
-  console.log("New Connection Initiated");
+// wss.on("connection", function connection(ws) {
+//   console.log("New Connection Initiated");
 
-  let recognizeStream = null;
+//   let recognizeStream = null;
 
-  ws.on("message", function incoming(message) {
-    const msg = JSON.parse(message);
-    switch (msg.event) {
-      case "connected":
-        console.log(`A new call has connected.`);
-        break;
-      case "start":
-        console.log(`Starting Media Stream ${msg.streamSid}`);
-        // Create Stream to the Google Speech to Text API
-        recognizeStream = client
-          .streamingRecognize(request)
-          .on("error", console.error)
-          .on("data", (data) => {
-            console.log(data.results[0].alternatives[0].transcript);
-            toReturn = data.results[0].alternatives[0].transcript;
-            wss.clients.forEach((client) => {
-              if (client.readyState === WebSocket.OPEN) {
-                client.send(
-                  JSON.stringify({
-                    event: "interim-transcription",
-                    text: data.results[0].alternatives[0].transcript,
-                  })
-                );
-              }
-            });
-          });
-        break;
-      case "media":
-        // Write Media Packets to the recognize stream
-        recognizeStream.write(msg.media.payload);
-        break;
-      case "stop":
-        console.log(`Call Has Ended`);
-        recognizeStream.destroy();
-        ws.send("event: done");
-        wss.clients.forEach((client) => {
-          if (client.readyState === WebSocket.OPEN) {
-            client.send(
-              JSON.stringify({
-                event: "call-ended",
-              })
-            );
-          }
-        });
-        break;
-    }
-  });
-});
+//   ws.on("message", function incoming(message) {
+//     const msg = JSON.parse(message);
+//     switch (msg.event) {
+//       case "connected":
+//         console.log(`A new call has connected.`);
+//         break;
+//       case "start":
+//         console.log(`Starting Media Stream ${msg.streamSid}`);
+//         // Create Stream to the Google Speech to Text API
+//         recognizeStream = client
+//           .streamingRecognize(request)
+//           .on("error", console.error)
+//           .on("data", (data) => {
+//             console.log(data.results[0].alternatives[0].transcript);
+//             toReturn = data.results[0].alternatives[0].transcript;
+//             wss.clients.forEach((client) => {
+//               if (client.readyState === WebSocket.OPEN) {
+//                 client.send(
+//                   JSON.stringify({
+//                     event: "interim-transcription",
+//                     text: data.results[0].alternatives[0].transcript,
+//                   })
+//                 );
+//               }
+//             });
+//           });
+//         break;
+//       case "media":
+//         // Write Media Packets to the recognize stream
+//         recognizeStream.write(msg.media.payload);
+//         break;
+//       case "stop":
+//         console.log(`Call Has Ended`);
+//         recognizeStream.destroy();
+//         ws.send("event: done");
+//         wss.clients.forEach((client) => {
+//           if (client.readyState === WebSocket.OPEN) {
+//             client.send(
+//               JSON.stringify({
+//                 event: "call-ended",
+//               })
+//             );
+//           }
+//         });
+//         break;
+//     }
+//   });
+// });
 
 app.post("/", (req, res) => {
   res.set("Content-Type", "text/xml");
@@ -114,11 +114,10 @@ app.post("/extractDetails", async (req, res) => {
   console.log("backend message: ", message);
   const response = await openai.createCompletion({
     model: "text-davinci-003",
-    prompt: `im going to write a made up emergency situation. extract the name of the person calling, the number they are calling from, what there emergency is and where they are located from the text.
-    Text: ${message}. Provide response with an array in order of person, number(format this as a phone number), emergency, location
+    prompt: `im going to write a made up emergency situation. extract the name of the person calling, the number they are calling from, what their emergency is and where they are located from the text.
+    Text: ${message}. Provide response with an array in order of person, number(format this as a phone number), emergency(choose from Medical Emergency, Car Accident, Water Safety Concern, House Fire, Building Fire, Being Followed, Shooting, Heart Attack, Serious Medical Emergency, Allergies), and location
     
-    Answer: 
-    `,
+    Array Answer:`,
     max_tokens: 100,
     temperature: 0,
   });
