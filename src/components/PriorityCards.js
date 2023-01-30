@@ -3,6 +3,8 @@ import axios from "axios";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import { MdCall } from "react-icons/md";
 import { AiFillCloseCircle } from "react-icons/ai";
+import io from "socket.io-client";
+import fetch from "node-fetch";
 
 const PriorityCards = ({
   priority,
@@ -16,14 +18,6 @@ const PriorityCards = ({
   const [message, setMessage] = useState("");
   const [response, setResponse] = useState("");
   const [showMap, setshowMap] = useState(false);
-
-  useEffect(() => {
-    setpriorityCard(priorityCard);
-  }, [priorityCard]);
-
-  useEffect(() => {
-    setpriorityCard((prev) => prev);
-  }, [priorityCard, setpriorityCard]);
 
   let theTranscript = "";
   let newId = "wqfwkgeghe45321";
@@ -40,23 +34,84 @@ const PriorityCards = ({
   };
   let newIndex;
   let thisTranscript = "";
-  useEffect(() => {
-    webSocketRef.current = new WebSocket("ws://localhost:8080");
-    webSocketRef.current.onmessage = (msg) => {
-      const data = JSON.parse(msg.data);
-      console.log(`id updated ${newId}`);
-      if (data.event === "interim-transcription") {
-        thisTranscript = data.text;
-      } else if (data.event === "call-ended") {
-        console.log("open to new card");
-        if (priorityCard.length > 0) {
-          handleSubmit(thisTranscript);
+
+  // setting up webserver connection
+  const socket = io("http://localhost:3001", { transports: ["websocket"] });
+
+  // setting up hugging face api
+  let api_token = "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";
+  let API_URL =
+    "https://api-inference.huggingface.co/models/sentence-transformers/all-MiniLM-L6-v2";
+
+  async function query(data) {
+    const response = await fetch(API_URL, {
+      headers: { Authorization: `Bearer ${api_token}` },
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    const result = await response.json();
+    return result;
+  }
+
+  // handling an emergency call
+  socket.on("call progress event", async function (call) {
+    console.log(call);
+    let thecards = [...priorityCard];
+    let newCard = {
+      inProgress: call.inProgress,
+      name: call.name,
+      number: call.number,
+      emergency: call.emergency,
+      location: call.location,
+      id: call.id,
+      status: "open",
+      transcript: call.transcript,
+      priority: 0,
+    };
+
+    //once call is complete - check if there is a similar emergency already reported
+    if (!newCard.inProgress && !newCard.simUpdate) {
+      //run the api call to the SBERT model
+      socket.emit("end");
+      const data = await query({
+        inputs: {
+          source_sentence: newCard.transcript,
+          sentences: priorityCard.map((card) => card.transcript),
+        },
+      });
+
+      let max = Math.max(...data);
+      let emerIndex = data.indexOf(max);
+
+      newCard = {
+        ...newCard,
+        similarity: data,
+        simUpdate: true,
+      };
+
+      if (max > 0.75) {
+        let parentEmergency = thecards[emerIndex];
+        let theEmergencies = [parentEmergency, newCard];
+        thecards[emerIndex] = theEmergencies;
+      } else {
+        let duplicate = thecards.findIndex((card) => card.id == call.id);
+        if (duplicate == -1) {
+          thecards.push(newCard);
         } else {
-          console.log("not found");
+          thecards[duplicate] = newCard;
         }
       }
-    };
-  }, []);
+
+      setpriorityCard(thecards);
+
+      console.log(
+        "the data returned from api + updated card:",
+        data,
+        priorityCard
+      );
+      console.log("the new call, ", newCard);
+    }
+  });
 
   const MyMap = () => {
     return (
@@ -73,6 +128,7 @@ const PriorityCards = ({
     );
   };
 
+  // setting up javascript speech recongnition
   const SpeechRecognition =
     window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -80,6 +136,7 @@ const PriorityCards = ({
   recognition.lang = "en-US";
   recognition.interimResults = false;
 
+  //
   function updateCard(newValues, text) {
     console.log("2", text);
     console.log("updating");
@@ -155,7 +212,6 @@ const PriorityCards = ({
 
   useEffect(() => {
     setpriorityCard((prev) => prev);
-    console.log("tryung");
   }, [
     handleSubmit,
     handleVoiceToText,
@@ -164,6 +220,13 @@ const PriorityCards = ({
     setpriorityCard,
     updateLabel,
   ]);
+
+  function addNewLines(text) {
+    let result = [];
+    result = text.split("\n");
+    console.log(result);
+    return result;
+  }
 
   return (
     <div>
@@ -230,10 +293,42 @@ const PriorityCards = ({
                     {card.emergency}
                   </h3>
                 </div>
+                {/* {card.similarity && ( */}
+                <div className="flex items-center py-2 text-myGrey gap-2">
+                  <h3 className=" text-sm ">Similarity Scores</h3>
+                  {card.similarity
+                    ? card.similarity.map((sim) => (
+                        <div className="w-auto flex items-center justify-center rounded-full font-bold text-orange-500 bg-orange-100 py-1 px-2  ">
+                          {sim}
+                        </div>
+                      ))
+                    : "Similarity Not Calculated"}
+                </div>
+                {/* )} */}
                 {/**second section */}
                 <div className=" items-center py-2 text-myGrey gap-5">
-                  <h3 className="font-bold text-sm">Transcript:</h3>
-                  <h3 className=" text-sm">{card.transcript}</h3>
+                  <h3 className="font-bold underline text-sm">Transcript:</h3>
+                  <h3 className=" text-sm">
+                    {addNewLines(card.transcript).map((item) => {
+                      if (item.includes("Dispatcher: ")) {
+                        let todisplay = item.split("Dispatcher: ");
+                        return (
+                          <h3>
+                            <span className="font-bold">Dispatcher: </span>
+                            {todisplay}
+                          </h3>
+                        );
+                      } else if (item.includes("Caller: ")) {
+                        let todisplay = item.split("Caller: ");
+                        return (
+                          <h3>
+                            <span className="font-bold">Caller: </span>
+                            {todisplay}
+                          </h3>
+                        );
+                      }
+                    })}
+                  </h3>
                 </div>
                 {/**third section */}
                 <div className="flex py-1 items-center text-myGrey gap-5">
