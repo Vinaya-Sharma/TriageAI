@@ -39,7 +39,7 @@ const PriorityCards = ({
   const socket = io("http://localhost:3001", { transports: ["websocket"] });
 
   // setting up hugging face api
-  let api_token = "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";
+  let api_token = process.env.HFToken;
   let API_URL =
     "https://api-inference.huggingface.co/models/sentence-transformers/all-MiniLM-L6-v2";
 
