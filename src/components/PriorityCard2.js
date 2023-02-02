@@ -20,7 +20,7 @@ const PriorityCard2 = ({
 
   // setting up hugging face api
   // let api_token = process.env.HFToken;
-  let api_token = "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";
+  let api_token = process.env.REACT_APP_HFTOKEN;
   let API_URL =
     "https://api-inference.huggingface.co/models/sentence-transformers/all-MiniLM-L6-v2";
 
