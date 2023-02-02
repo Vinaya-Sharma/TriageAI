@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import { MapContainer, TileLayer } from "react-leaflet";
 import { MdCall } from "react-icons/md";
 import { AiFillCloseCircle } from "react-icons/ai";
 import io from "socket.io-client";
+import fetch from "node-fetch";
 
-const PriorityCards = ({
+const PriorityCard2 = ({
   priority,
   priorityCard,
   setpriorityCard,
@@ -12,17 +13,29 @@ const PriorityCards = ({
   selectedCard,
   setSelectedCard,
 }) => {
+  const [selectedCaller, setSelectedCaller] = useState(0);
+
   // setting up webserver connection
   const socket = io("http://localhost:3001", { transports: ["websocket"] });
 
   // setting up hugging face api
-  let api_token = process.env.REACT_APP_HFTOKEN;
+  // let api_token = process.env.HFToken;
+  let api_token = "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";
   let API_URL =
     "https://api-inference.huggingface.co/models/sentence-transformers/all-MiniLM-L6-v2";
 
+  async function query(data) {
+    const response = await fetch(API_URL, {
+      headers: { Authorization: `Bearer ${api_token}` },
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    const result = await response.json();
+    return result;
+  }
+
   // handling an emergency call
   socket.on("call progress event", async function (call) {
-    console.log(call);
     let thecards = [...priorityCard];
     let newCard = {
       inProgress: call.inProgress,
@@ -36,13 +49,47 @@ const PriorityCards = ({
       priority: 0,
     };
 
-    let duplicate = thecards.findIndex((card) => card.id == call.id);
+    let duplicate = thecards.findIndex((card) => {
+      return card[0].id == call.id;
+    });
     if (duplicate == -1) {
-      thecards.push(newCard);
+      thecards.push([newCard]);
     } else {
-      thecards[duplicate] = newCard;
+      thecards[duplicate][0] = newCard;
     }
-    setpriorityCard(thecards);
+
+    //once call is complete - check if there is a similar emergency already reported
+    if (!newCard.inProgress && !newCard.simUpdate) {
+      //run the api call to the SBERT model
+      const data = await query({
+        inputs: {
+          source_sentence: newCard.transcript,
+          sentences: priorityCard.map((card) => card[0].transcript),
+        },
+      });
+
+      let max = Math.max(...data);
+      let emerIndex = data.indexOf(max);
+
+      newCard = {
+        ...newCard,
+        similarity: data,
+        simUpdate: true,
+      };
+
+      if (max > 0.75) {
+        thecards[emerIndex].push(newCard);
+      } else {
+        let duplicate = thecards.findIndex((card) => card[1].id == call.id);
+        if (duplicate == -1) {
+          thecards.push([newCard]);
+        } else {
+          thecards[duplicate][1] = newCard;
+        }
+      }
+
+      setpriorityCard(thecards);
+    }
   });
 
   const MyMap = () => {
@@ -79,10 +126,11 @@ const PriorityCards = ({
           : `Level ${priority} Priority `}
       </h3>
 
-      {priorityCard.map((card) => {
+      {priorityCard.map((cardGroup) => {
+        let card = cardGroup[selectedCaller];
         if (
-          priority == card.priority ||
-          (priority == "Incomming" && card.priority == 0)
+          priority == card?.priority ||
+          (priority == "Incomming" && card?.priority == 0)
         ) {
           return card.id == selectedCard ? (
             <div
@@ -95,11 +143,24 @@ const PriorityCards = ({
                 }}
                 className="text-lg absolute top-2 right-2"
               />
-              <div className="flex gap-2 items-center">
-                <h3 className="font-bold text-sm py-2">{card.name} </h3>
+              <div className="flex  gap-2 items-center">
+                <select
+                  onChange={(e) => {
+                    let theIndex = cardGroup.findIndex(
+                      (person) => person.name == e.target.value
+                    );
+                    console.log("name selected", theIndex);
+                    setSelectedCaller(theIndex);
+                  }}
+                  className="font-bold text-[15px] outline-none py-2"
+                >
+                  {cardGroup.map((calls) => (
+                    <option value={calls.name}>{calls.name}</option>
+                  ))}
+                </select>
                 <MdCall className="w-4 h-4" />
               </div>
-              <div className="text-xs">
+              <div className="ml-1 text-xs">
                 {/**first section */}
                 <div className="flex text-myGrey gap-5">
                   <h3 className=" text-sm">Priority</h3>
@@ -130,17 +191,6 @@ const PriorityCards = ({
                   <h3 className="w-auto flex items-center self-center text-center justify-center rounded-full font-bold text-green-500 bg-green-100  py-1 px-2 ">
                     {card.emergency}
                   </h3>
-                </div>
-                {/* {card.similarity && ( */}
-                <div className="flex items-center py-2 text-myGrey gap-2">
-                  <h3 className=" text-sm ">Similarity Scores</h3>
-                  {card.similarity
-                    ? card.similarity.map((sim) => (
-                        <div className="w-auto flex items-center justify-center rounded-full font-bold text-orange-500 bg-orange-100 py-1 px-2  ">
-                          {sim}
-                        </div>
-                      ))
-                    : "Similarity Not Calculated"}
                 </div>
                 {/* )} */}
                 {/**second section */}
@@ -186,14 +236,20 @@ const PriorityCards = ({
               </div>
             </div>
           ) : (
+            //Closed card
             <div
               key={card.id}
               onClick={() => {
                 setSelectedCard(card.id);
               }}
-              className="mb-4 text-xs p-4 bg-white min-w-[400px] max-w-[900px] w-full border-[1px] border-myGrey rounded-lg min-w-88 min-h-64 "
+              className="mb-4 relative text-xs p-4 bg-white min-w-[400px] max-w-[900px] w-full border-[1px] border-myGrey rounded-lg min-w-88 min-h-64 "
             >
-              <h3 className="font-bold py-2 min-w-[400px]  text-sm ">
+              {cardGroup.length > 1 && (
+                <div className="rounded-full w-6 h-6 border-1 items-center flex justify-center font-bold border-purple-500 bg-purple-200 absolute top-2 right-2">
+                  {cardGroup.length}
+                </div>
+              )}
+              <h3 className="font-bold py-2 min-w-[400px] text-sm ">
                 {card.name}
               </h3>
               <div className="text-xs">
@@ -233,4 +289,4 @@ const PriorityCards = ({
   );
 };
 
-export default PriorityCards;
+export default PriorityCard2;

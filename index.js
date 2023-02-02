@@ -7,6 +7,10 @@ const { Configuration, OpenAIApi } = require("openai");
 const { MessagingResponse } = require("twilio").twiml;
 const twilio = require("twilio");
 const bodyParser = require("body-parser");
+const fetch = require("node-fetch");
+
+const a121url =
+  "https://api.ai21.com/studio/v1/experimental/j1-grande-instruct/complete";
 
 //initializing app + defining port
 const app = express();
@@ -49,10 +53,10 @@ io.on("end", function () {
 });
 
 // configuring open ai
-const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-const openai = new OpenAIApi(configuration);
+// const configuration = new Configuration({
+//   apiKey: process.env.OPENAI_API_KEY,
+// });
+// const openai = new OpenAIApi(configuration);
 
 // defining the global variables that will be utilized in various routes
 let convo;
@@ -145,15 +149,60 @@ app.post("/respond", async (req, res) => {
 async function generateAIResponse(req) {
   console.log(convo);
   if (!req.session.emergency) {
-    const response = await openai.createCompletion({
-      model: "text-davinci-003",
-      prompt: `pretend you are a 911 dispatch officer, here is an emergency: ${convo} 
-            extract the nature of this emergency in less than 5 key words: `,
-      temperature: 0.9,
-      max_tokens: 2048,
-    });
+    console.log("running request");
+    const options = {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+        Authorization: "Bearer IIxrBMjRztzaykQV8FS88OjcKxze7XEN",
+      },
+      body: JSON.stringify({
+        numResults: 1,
+        maxTokens: 16,
+        minTokens: 0,
+        temperature: 0.7,
+        topP: 1,
+        topKReturn: 0,
+        frequencyPenalty: {
+          scale: 1,
+          applyToWhitespaces: true,
+          applyToPunctuations: true,
+          applyToNumbers: true,
+          applyToStopwords: true,
+          applyToEmojis: true,
+        },
+        presencePenalty: {
+          scale: 0,
+          applyToWhitespaces: true,
+          applyToPunctuations: true,
+          applyToNumbers: true,
+          applyToStopwords: true,
+          applyToEmojis: true,
+        },
+        countPenalty: {
+          scale: 0,
+          applyToWhitespaces: true,
+          applyToPunctuations: true,
+          applyToNumbers: true,
+          applyToStopwords: true,
+          applyToEmojis: true,
+        },
+        prompt: `pretend you are a 911 dispatch officer, here is an emergency: ${convo} 
+        extract the nature of this emergency in less than 5 key words. type of emergency: `,
+      }),
+    };
 
-    const emergencyresp = response.data.choices[0].text.trim();
+    let response1;
+    await fetch(a121url, options)
+      .then((res) => res.json())
+      .then((json) => {
+        response1 = json;
+        console.log(json);
+      })
+      .catch((err) => console.error("error:" + err));
+
+    const emergencyresp = response1.completions[0].data.text.trim();
     req.session.emergency = emergencyresp;
     emergency = emergencyresp;
 
@@ -163,15 +212,59 @@ async function generateAIResponse(req) {
   }
 
   if (!req.session.location) {
-    const response = await openai.createCompletion({
-      model: "text-davinci-003",
-      prompt: `pretend you are a 911 dispatch officer, here is a message: ${convo.toLowerCase()} 
-            extract the location and format this as an address or location. return "undefined" if the caller does not give a location, or the location/address if one is provided. location: `,
-      temperature: 0.9,
-      max_tokens: 2048,
-    });
+    const options = {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+        Authorization: "Bearer IIxrBMjRztzaykQV8FS88OjcKxze7XEN",
+      },
+      body: JSON.stringify({
+        numResults: 1,
+        maxTokens: 16,
+        minTokens: 0,
+        temperature: 0.7,
+        topP: 1,
+        topKReturn: 0,
+        frequencyPenalty: {
+          scale: 1,
+          applyToWhitespaces: true,
+          applyToPunctuations: true,
+          applyToNumbers: true,
+          applyToStopwords: true,
+          applyToEmojis: true,
+        },
+        presencePenalty: {
+          scale: 0,
+          applyToWhitespaces: true,
+          applyToPunctuations: true,
+          applyToNumbers: true,
+          applyToStopwords: true,
+          applyToEmojis: true,
+        },
+        countPenalty: {
+          scale: 0,
+          applyToWhitespaces: true,
+          applyToPunctuations: true,
+          applyToNumbers: true,
+          applyToStopwords: true,
+          applyToEmojis: true,
+        },
+        prompt: `here is a message: ${convo.toLowerCase()}.
+        extract the location and format this as an address or location. return "undefined" if the caller does not give a location. location: `,
+      }),
+    };
 
-    const locationresp = response.data.choices[0].text.trim();
+    let response2;
+    await fetch(a121url, options)
+      .then((res) => res.json())
+      .then((json) => {
+        response2 = json;
+        console.log(json);
+      })
+      .catch((err) => console.error("error:" + err));
+
+    const locationresp = response2.completions[0].data.text.trim();
     console.log(locationresp);
 
     if (locationresp == "undefined" && redo[0] < 1) {
@@ -192,15 +285,59 @@ async function generateAIResponse(req) {
     return botResponce;
   }
   if (!req.session.name) {
-    const response = await openai.createCompletion({
-      model: "text-davinci-003",
-      prompt: `pretend you are a 911 dispatch officer, here is a message: ${convo.toLowerCase()} 
-            extract the callers name or return "undefined" if the caller does not give one. name: `,
-      temperature: 0.9,
-      max_tokens: 2048,
-    });
+    const options = {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+        Authorization: "Bearer IIxrBMjRztzaykQV8FS88OjcKxze7XEN",
+      },
+      body: JSON.stringify({
+        numResults: 1,
+        maxTokens: 16,
+        minTokens: 0,
+        temperature: 0.7,
+        topP: 1,
+        topKReturn: 0,
+        frequencyPenalty: {
+          scale: 1,
+          applyToWhitespaces: true,
+          applyToPunctuations: true,
+          applyToNumbers: true,
+          applyToStopwords: true,
+          applyToEmojis: true,
+        },
+        presencePenalty: {
+          scale: 0,
+          applyToWhitespaces: true,
+          applyToPunctuations: true,
+          applyToNumbers: true,
+          applyToStopwords: true,
+          applyToEmojis: true,
+        },
+        countPenalty: {
+          scale: 0,
+          applyToWhitespaces: true,
+          applyToPunctuations: true,
+          applyToNumbers: true,
+          applyToStopwords: true,
+          applyToEmojis: true,
+        },
+        prompt: `pretend you are a 911 dispatch officer, here is a message: ${convo.toLowerCase()} 
+        extract the callers name or return "undefined" if the caller does not give a name. callers name: `,
+      }),
+    };
 
-    const nameresp = response.data.choices[0].text.trim();
+    let response3;
+    await fetch(a121url, options)
+      .then((res) => res.json())
+      .then((json) => {
+        response3 = json;
+        console.log(json);
+      })
+      .catch((err) => console.error("error:" + err));
+
+    const nameresp = response3.completions[0].data.text.trim();
 
     if (nameresp == "undefined" && redo[1] < 1) {
       console.log("no name given");
@@ -221,16 +358,60 @@ async function generateAIResponse(req) {
     return botResponce;
   }
   if (!req.session.number) {
-    const response = await openai.createCompletion({
-      model: "text-davinci-003",
-      prompt: `pretend you are a 911 dispatch officer, here is a message: ${convo.toLowerCase()} 
-            extract the callers phone number or return "undefined" if one is not provided. extract your answer straight from the message,
-             if no number is provided just return "undefined". phone number: `,
-      temperature: 0.9,
-      max_tokens: 2048,
-    });
+    const options = {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+        Authorization: "Bearer IIxrBMjRztzaykQV8FS88OjcKxze7XEN",
+      },
+      body: JSON.stringify({
+        numResults: 1,
+        maxTokens: 16,
+        minTokens: 0,
+        temperature: 0.7,
+        topP: 1,
+        topKReturn: 0,
+        frequencyPenalty: {
+          scale: 1,
+          applyToWhitespaces: true,
+          applyToPunctuations: true,
+          applyToNumbers: true,
+          applyToStopwords: true,
+          applyToEmojis: true,
+        },
+        presencePenalty: {
+          scale: 0,
+          applyToWhitespaces: true,
+          applyToPunctuations: true,
+          applyToNumbers: true,
+          applyToStopwords: true,
+          applyToEmojis: true,
+        },
+        countPenalty: {
+          scale: 0,
+          applyToWhitespaces: true,
+          applyToPunctuations: true,
+          applyToNumbers: true,
+          applyToStopwords: true,
+          applyToEmojis: true,
+        },
+        prompt: `pretend you are a 911 dispatch officer, here is a message: ${convo.toLowerCase()} 
+        extract the callers phone number or return "undefined" if one is not provided. extract your answer straight from the message,
+         if no number is provided just return "undefined". callers phone number: `,
+      }),
+    };
 
-    const numberresp = response.data.choices[0].text.trim();
+    let response4;
+    await fetch(a121url, options)
+      .then((res) => res.json())
+      .then((json) => {
+        response4 = json;
+        console.log(json);
+      })
+      .catch((err) => console.error("error:" + err));
+
+    const numberresp = response4.completions[0].data.text.trim();
 
     if (numberresp == "undefined" && redo[2] < 1) {
       console.log("no number given");
@@ -269,12 +450,56 @@ async function generateAIResponse(req) {
       "Specifically get any more details that you think a dispatcher would need in this situation and tell the caller what they can do right now to stay safe until help arrives. Dispatcher: \n";
   }
 
-  let botResponce = await openai.createCompletion({
-    model: "text-davinci-003",
-    prompt: req.session.prompt,
-    temperature: 0.9,
-    max_tokens: 2048,
-  });
+  const options = {
+    method: "POST",
+    headers: {
+      accept: "application/json",
+      "content-type": "application/json",
+      Authorization: "Bearer IIxrBMjRztzaykQV8FS88OjcKxze7XEN",
+    },
+    body: JSON.stringify({
+      numResults: 1,
+      maxTokens: 16,
+      minTokens: 0,
+      temperature: 0.7,
+      topP: 1,
+      topKReturn: 0,
+      frequencyPenalty: {
+        scale: 1,
+        applyToWhitespaces: true,
+        applyToPunctuations: true,
+        applyToNumbers: true,
+        applyToStopwords: true,
+        applyToEmojis: true,
+      },
+      presencePenalty: {
+        scale: 0,
+        applyToWhitespaces: true,
+        applyToPunctuations: true,
+        applyToNumbers: true,
+        applyToStopwords: true,
+        applyToEmojis: true,
+      },
+      countPenalty: {
+        scale: 0,
+        applyToWhitespaces: true,
+        applyToPunctuations: true,
+        applyToNumbers: true,
+        applyToStopwords: true,
+        applyToEmojis: true,
+      },
+      prompt: req.session.prompt,
+    }),
+  };
+
+  let response5;
+  await fetch(a121url, options)
+    .then((res) => res.json())
+    .then((json) => {
+      response5 = json;
+      console.log(json);
+    })
+    .catch((err) => console.error("error:" + err));
 
   // console.log(botResponce.data.choices[0].text);
 
@@ -282,8 +507,7 @@ async function generateAIResponse(req) {
     return "Thank you for providing all of this information. I will have a 9-1-1 dispatch officer get in contact with you as soon as possibl.";
   } else {
     console.log("adding response");
-    let toreturn = botResponce.data.choices[0].text;
-    convo += toreturn.trim();
+    convo += response5.completions[0].data.text.trim();
     count += 1;
     return toreturn;
   }
