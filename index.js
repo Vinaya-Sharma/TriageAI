@@ -146,7 +146,7 @@ async function generateAIResponse(req) {
   console.log(convo);
   if (!req.session.emergency) {
     const response = await openai.createCompletion({
-      model: "text-davinci-002",
+      model: "text-davinci-003",
       prompt: `pretend you are a 911 dispatch officer, here is an emergency: ${convo} 
             extract the nature of this emergency in less than 5 key words: `,
       temperature: 0.9,
@@ -164,7 +164,7 @@ async function generateAIResponse(req) {
 
   if (!req.session.location) {
     const response = await openai.createCompletion({
-      model: "text-davinci-002",
+      model: "text-davinci-003",
       prompt: `pretend you are a 911 dispatch officer, here is a message: ${convo.toLowerCase()} 
             extract the location and format this as an address or location. return "undefined" if the caller does not give a location, or the location/address if one is provided. location: `,
       temperature: 0.9,
@@ -193,7 +193,7 @@ async function generateAIResponse(req) {
   }
   if (!req.session.name) {
     const response = await openai.createCompletion({
-      model: "text-davinci-002",
+      model: "text-davinci-003",
       prompt: `pretend you are a 911 dispatch officer, here is a message: ${convo.toLowerCase()} 
             extract the callers name or return "undefined" if the caller does not give one. name: `,
       temperature: 0.9,
@@ -222,7 +222,7 @@ async function generateAIResponse(req) {
   }
   if (!req.session.number) {
     const response = await openai.createCompletion({
-      model: "text-davinci-002",
+      model: "text-davinci-003",
       prompt: `pretend you are a 911 dispatch officer, here is a message: ${convo.toLowerCase()} 
             extract the callers phone number or return "undefined" if one is not provided. extract your answer straight from the message,
              if no number is provided just return "undefined". phone number: `,
@@ -270,7 +270,7 @@ async function generateAIResponse(req) {
   }
 
   let botResponce = await openai.createCompletion({
-    model: "text-davinci-002",
+    model: "text-davinci-003",
     prompt: req.session.prompt,
     temperature: 0.9,
     max_tokens: 2048,
