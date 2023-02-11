@@ -43,7 +43,10 @@ const Sidebar = () => {
         <h5 className="text-myGrey text-xs font-bold mb-2">DASHBOARDS</h5>
         {/**all dashboards */}
         {dashboards.map((dashboard) => (
-          <div className="flex p-2 items-center text-sm justify-between ">
+          <div
+            key={dashboard.name}
+            className="flex p-2 items-center text-sm justify-between "
+          >
             <h5 className="font-bold">{dashboard.name}</h5>
             <h5 className="bg-[#F63B3B] font-bold text-[#E40808] rounded-full flex items-center justify-center content-center w-6 h-6 bg-opacity-30 ">
               {dashboard.number}
@@ -58,7 +61,10 @@ const Sidebar = () => {
           <h5 className="text-gray-500 text-sm font-bold mb-2">Projects</h5>
           {/**all dashboards */}
           {projects.map((projects) => (
-            <div className="flex p-2 items-center text-sm justify-between ">
+            <div
+              key={projects.name}
+              className="flex p-2 items-center text-sm justify-between "
+            >
               <h5 className="font-bold">{projects.name}</h5>
               <h5 className="bg-[#F63B3B] font-bold text-[#E40808] rounded-full flex items-center justify-center content-center w-6 h-6 bg-opacity-30 ">
                 {projects.number}

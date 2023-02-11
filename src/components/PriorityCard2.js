@@ -23,6 +23,8 @@ const PriorityCard2 = ({
   let api_token = process.env.REACT_APP_HFTOKEN;
   let API_URL =
     "https://api-inference.huggingface.co/models/sentence-transformers/all-MiniLM-L6-v2";
+  let newCard;
+  let currentSimSearch;
 
   async function query(data) {
     const response = await fetch(API_URL, {
@@ -37,7 +39,7 @@ const PriorityCard2 = ({
   // handling an emergency call
   socket.on("call progress event", async function (call) {
     let thecards = [...priorityCard];
-    let newCard = {
+    newCard = {
       inProgress: call.inProgress,
       name: call.name,
       number: call.number,
@@ -47,6 +49,7 @@ const PriorityCard2 = ({
       status: "open",
       transcript: call.transcript,
       priority: 0,
+      simUpdate: false,
     };
 
     let duplicate = thecards.findIndex((card) => {
@@ -54,41 +57,56 @@ const PriorityCard2 = ({
     });
     if (duplicate == -1) {
       thecards.push([newCard]);
+      setpriorityCard(thecards);
+      currentSimSearch = false;
     } else {
       thecards[duplicate][0] = newCard;
     }
 
     //once call is complete - check if there is a similar emergency already reported
-    if (!newCard.inProgress && !newCard.simUpdate) {
+    if (!newCard.inProgress && !newCard.simUpdate && !currentSimSearch) {
+      currentSimSearch = true;
+      let allCallTranscripts = priorityCard.map((card) => card[0].transcript);
+      console.log(allCallTranscripts);
+      console.log(newCard.transcript);
+
       //run the api call to the SBERT model
+      console.log("looking for similarity");
       const data = await query({
         inputs: {
           source_sentence: newCard.transcript,
-          sentences: priorityCard.map((card) => card[0].transcript),
+          sentences: allCallTranscripts,
         },
       });
 
-      let max = Math.max(...data);
-      let emerIndex = data.indexOf(max);
+      if (data) {
+        console.log(data);
+        let max = Math.max(...data);
+        let emerIndex = data.indexOf(max);
 
-      newCard = {
-        ...newCard,
-        similarity: data,
-        simUpdate: true,
-      };
+        newCard = {
+          ...newCard,
+          similarity: data,
+          simUpdate: true,
+        };
 
-      if (max > 0.75) {
-        thecards[emerIndex].push(newCard);
-      } else {
-        let duplicate = thecards.findIndex((card) => card[1].id == call.id);
-        if (duplicate == -1) {
-          thecards.push([newCard]);
+        if (max > 0.75) {
+          thecards[emerIndex].push(newCard);
         } else {
-          thecards[duplicate][1] = newCard;
+          let duplicate = thecards.findIndex(
+            (card) => card[1].id == newCard.id
+          );
+          if (duplicate == -1) {
+            thecards.push([newCard]);
+          } else {
+            thecards[duplicate][1] = newCard;
+          }
         }
-      }
 
-      setpriorityCard(thecards);
+        setpriorityCard(thecards);
+      } else {
+        console.log("error at hugging face");
+      }
     }
   });
 

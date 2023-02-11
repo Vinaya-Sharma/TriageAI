@@ -36,9 +36,12 @@ const PriorityCards = ({
       priority: 0,
     };
 
-    let duplicate = thecards.findIndex((card) => card.id == call.id);
+    let duplicate = thecards.findIndex(
+      (card) => card.id && card.id == newCard.id
+    );
     if (duplicate == -1) {
       thecards.push(newCard);
+      setpriorityCard(thecards);
     } else {
       thecards[duplicate] = newCard;
     }
@@ -131,18 +134,6 @@ const PriorityCards = ({
                     {card.emergency}
                   </h3>
                 </div>
-                {/* {card.similarity && ( */}
-                <div className="flex items-center py-2 text-myGrey gap-2">
-                  <h3 className=" text-sm ">Similarity Scores</h3>
-                  {card.similarity
-                    ? card.similarity.map((sim) => (
-                        <div className="w-auto flex items-center justify-center rounded-full font-bold text-orange-500 bg-orange-100 py-1 px-2  ">
-                          {sim}
-                        </div>
-                      ))
-                    : "Similarity Not Calculated"}
-                </div>
-                {/* )} */}
                 {/**second section */}
                 <div className=" items-center py-2 text-myGrey gap-5">
                   <h3 className="font-bold underline text-sm">Transcript:</h3>

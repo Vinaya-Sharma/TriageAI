@@ -20,7 +20,7 @@ const Header = () => {
         </div>
         <div className="flex gap-5 w-full items-center">
           {tasks.map((task) => (
-            <div>
+            <div key={task}>
               <h4>
                 <h5
                   className={`${

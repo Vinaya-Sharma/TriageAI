@@ -106,16 +106,6 @@ app.post("/respond", async (req, res) => {
   let aiResponse = await generateAIResponse(req);
   twiml.say({ voice: "Polly.Joanna-Neural" }, aiResponse);
 
-  io.emit("call progress event", {
-    inProgress: hangUp ? false : true,
-    emergency: emergency,
-    name: callerName,
-    location: location,
-    number: number,
-    transcript: convo,
-    id: id,
-  });
-
   if (hangUp) {
     twiml.hangup();
     emergency = req.session.emergency;
@@ -130,6 +120,16 @@ app.post("/respond", async (req, res) => {
     req.session.number = null;
     req.session.init = null;
   }
+
+  io.emit("call progress event", {
+    inProgress: hangUp ? false : true,
+    emergency: emergency,
+    name: callerName,
+    location: location,
+    number: number,
+    transcript: convo,
+    id: id,
+  });
 
   twiml.redirect({ method: "POST" }, `/transcribe`);
   res.set("Content-Type", "text/xml");
@@ -258,7 +258,7 @@ async function generateAIResponse(req) {
     hangUp = true;
   } else {
     req.session.prompt +=
-      "Specifically get any more details that you think a dispatcher would need in this situation and tell the caller what they can do right now to stay safe until help arrives. Dispatcher: \n";
+      "Specifically get any more details that you think a dispatcher would need in this situation and tell the caller what they can do right now to stay safe until help arrives, dont repeat anything already mentioned. Dispatcher: \n";
   }
 
   let botResponce = await openai.createCompletion({

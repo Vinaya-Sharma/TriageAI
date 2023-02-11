@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import PriorityCards from "./PriorityCards";
+import PriorityCards2 from "./PriorityCard2";
 
 const Content = () => {
   const [automated, setautomated] = useState(true);
@@ -138,7 +138,7 @@ const Content = () => {
 
       {/**emergencies */}
       <div className="py-8 flex gap-5 w-full overflow-x-scroll ">
-        <PriorityCards
+        <PriorityCards2
           priority="Incomming"
           priorityCard={priorityCard}
           setpriorityCard={setpriorityCard}
@@ -146,7 +146,7 @@ const Content = () => {
           selectedCard={selectedCard}
           setSelectedCard={setSelectedCard}
         />
-        <PriorityCards
+        <PriorityCards2
           priority="1"
           priorityCard={priorityCard}
           setpriorityCard={setpriorityCard}
@@ -154,7 +154,7 @@ const Content = () => {
           selectedCard={selectedCard}
           setSelectedCard={setSelectedCard}
         />
-        <PriorityCards
+        <PriorityCards2
           priority="2"
           priorityCard={priorityCard}
           setpriorityCard={setpriorityCard}
@@ -162,7 +162,7 @@ const Content = () => {
           selectedCard={selectedCard}
           setSelectedCard={setSelectedCard}
         />
-        <PriorityCards
+        <PriorityCards2
           priority="3"
           priorityCard={priorityCard}
           setpriorityCard={setpriorityCard}
@@ -170,7 +170,7 @@ const Content = () => {
           selectedCard={selectedCard}
           setSelectedCard={setSelectedCard}
         />
-        <PriorityCards
+        <PriorityCards2
           priority="4"
           priorityCard={priorityCard}
           setpriorityCard={setpriorityCard}
@@ -178,7 +178,7 @@ const Content = () => {
           selectedCard={selectedCard}
           setSelectedCard={setSelectedCard}
         />
-        <PriorityCards
+        <PriorityCards2
           priority="5"
           priorityCard={priorityCard}
           setpriorityCard={setpriorityCard}
