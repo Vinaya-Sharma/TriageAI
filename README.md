@@ -10,6 +10,9 @@ With this Triage.AI was born, an AI-based chatbot prototype and robust managemen
 
 If you are interested in this project feel free to check out my youtube videos and medium article on Triage.AI!
 Article: https://medium.com/p/88b964377042
+
 Teaser: https://youtu.be/-eSjK2SEQs8
+
 Code Walkthrough: https://youtu.be/P1M8P3_h7i8
+
 Transformers Explanation: https://youtu.be/-a1bnmWAb_Y
